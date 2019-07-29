@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'DWAPIClient_Example' do
+  pod 'DWAPIClient', :path => '../'
+
+  target 'DWAPIClient_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end

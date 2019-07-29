@@ -1,0 +1,6 @@
+framework module DWAPIClient {
+  umbrella header "DWAPIClient-umbrella.h"
+
+  export *
+  module * { export * }
+}
