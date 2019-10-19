@@ -40,12 +40,12 @@
 		607FACEA1AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		607FACEB1AFB9204008FA782 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		7EF4D46F911455EC6DB1E9DF /* Pods-DWAPIClient_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DWAPIClient_Tests.debug.xcconfig"; path = "Target Support Files/Pods-DWAPIClient_Tests/Pods-DWAPIClient_Tests.debug.xcconfig"; sourceTree = "<group>"; };
-		932325DC1906B717959F1A24 /* DWAPIClient.podspec */ = {isa = PBXFileReference; includeInIndex = 1; name = DWAPIClient.podspec; path = ../DWAPIClient.podspec; sourceTree = "<group>"; };
+		932325DC1906B717959F1A24 /* DWAPIClient.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = DWAPIClient.podspec; path = ../DWAPIClient.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		9765826AC4401BCA63EFA326 /* Pods_DWAPIClient_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DWAPIClient_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C55D8E4EDF550AA5AB27F175 /* Pods-DWAPIClient_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DWAPIClient_Example.release.xcconfig"; path = "Target Support Files/Pods-DWAPIClient_Example/Pods-DWAPIClient_Example.release.xcconfig"; sourceTree = "<group>"; };
-		C8F1F6FB356767052FFEF959 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		C8F1F6FB356767052FFEF959 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		E07120383A08B03B1D052AFC /* Pods_DWAPIClient_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DWAPIClient_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		F3312543F71F37AE9BA5D5FC /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		F3312543F71F37AE9BA5D5FC /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		F611C6474AB58BE3C6B3A776 /* Pods-DWAPIClient_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DWAPIClient_Example.debug.xcconfig"; path = "Target Support Files/Pods-DWAPIClient_Example/Pods-DWAPIClient_Example.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -147,7 +147,6 @@
 				7EF4D46F911455EC6DB1E9DF /* Pods-DWAPIClient_Tests.debug.xcconfig */,
 				2E662D73D5B5DE5A5311D389 /* Pods-DWAPIClient_Tests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -227,6 +226,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);

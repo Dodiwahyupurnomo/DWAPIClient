@@ -62,11 +62,34 @@ public enum APIError: Error {
         case .baseError(let message): return ["user_info":message != nil ? message! : "Unknown error"]
         }
     }
+}
+
+public struct FileInfo {
+    var fileContents: Data!
+    var mimetype: String!
+    var filename: String!
+    var name: String!
     
+    public init(withFileURL url: URL?, filename: String, name: String) {
+        guard let url = url else { return }
+        fileContents = try? Data(contentsOf: url)
+        self.filename = filename
+        self.name = name
+        self.mimetype = url.mimeType()
+    }
+    
+    public init(withData data: Data?, filename: String, name: String, mimetype: String) {
+        guard let data = data else { return }
+        self.fileContents = data
+        self.filename = filename
+        self.name = name
+        self.mimetype = mimetype
+    }
 }
 
 struct DWAPIClientConfigurations {
     var defaultRequestTimeOut = 10.0
+    var defaultUploadTimeOut = 60.0
 }
 
 open class DWAPIClient:NSObject {
@@ -88,6 +111,41 @@ open class DWAPIClient:NSObject {
     
     override convenience init() {
         self.init(configuration: .default)
+    }
+    
+    
+    public func httpUpload<T:Decodable>(url: String,
+                                        files:[FileInfo],
+                                        parameters:[String:Any]?,
+                                        headers: [String:String]?,
+                                        decode: @escaping (Decodable) -> T?,
+                                        _ completion: @escaping (Result<T,APIError>)->Void){
+        guard let encodedString = url.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) else {
+            print("Failed to encoding string")
+            return
+        }
+        
+        guard let url = URL(string: encodedString) else {
+            print("Failed to generate url")
+            return
+        }
+        
+        let urlrequest = NSMutableURLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval:config.defaultUploadTimeOut)
+        
+        headers?.forEach({ (arg) in
+            let (key, value) = arg
+            urlrequest.addValue(value, forHTTPHeaderField: key)
+        })
+        
+        urlrequest.httpMethod = HTTPRequestMethod.post.rawValue
+        
+        do{
+            try urlrequest.setMultipartFormData(files: files, parameters: parameters ?? [:], encoding: .utf8)
+        }catch{
+            print(error.localizedDescription)
+        }
+        
+        fetch(with: urlrequest as URLRequest, decode: decode, completion: completion)
     }
     
     public func httpRequest<T:Decodable>(url: String, method: HTTPRequestMethod = .get,parameters:[String:Any]?,headers: [String:String]?,decode: @escaping (Decodable) -> T?,_ completion: @escaping (Result<T,APIError>)->Void){
@@ -120,12 +178,16 @@ open class DWAPIClient:NSObject {
         
         if method != .get, let params = parameters {
             do{
-                try urlrequest.setMultipartFormData(params, encoding: .utf8)
+                try urlrequest.setMultipartFormData(parameters: params, encoding: .utf8)
             }catch{
                 print(error.localizedDescription)
             }
         }
         fetch(with: urlrequest as URLRequest, decode: decode, completion: completion)
+    }
+    
+    private func generateURLRequest(url: String, method: HTTPRequestMethod = .get,files:[FileInfo]?,parameters:[String:Any]?,headers: [String:String]?){
+        
     }
     
     private func fetch<T: Decodable>(with request: URLRequest, decode: @escaping (Decodable) -> T?, completion: @escaping (Result<T, APIError>) -> Void) {
@@ -243,7 +305,7 @@ extension NSMutableURLRequest {
      
      - Note: The default `httpMethod` is `GET`, and `GET` requests do not typically have a response body. Remember to set the `httpMethod` to e.g. `POST` before sending the request.
      */
-    func setMultipartFormData(_ parameters: [String: Any], encoding: String.Encoding) throws {
+    func setMultipartFormData(files: [FileInfo]? = nil,parameters: [String: Any], encoding: String.Encoding) throws {
         let boundary = String(format: "------------------------%08X%08X", arc4random(), arc4random())
         
         let contentType: String = try {
@@ -256,34 +318,69 @@ extension NSMutableURLRequest {
         
         httpBody = try {
             var body = Data()
+            try self.generateMultipartFormData(for: &body, with: parameters, encoding: encoding, boundary: boundary)
             
-            for (rawName, rawValue) in parameters {
-                if !body.isEmpty {
-                    body.append("\r\n".data(using: .utf8)!)
-                }
-                
-                body.append("--\(boundary)\r\n".data(using: .utf8)!)
-                
-                guard
-                    rawName.canBeConverted(to: encoding),
-                    let disposition = "Content-Disposition: form-data; name=\"\(rawName)\"\r\n".data(using: .utf8) else {
-                        throw APIError.baseError("Internal error with code 1001, please contact admin")
-                }
-                body.append(disposition)
-                
-                body.append("\r\n".data(using: .utf8)!)
-                
-                guard let value = "\(rawValue)".data(using: encoding) else {
-                    throw APIError.baseError("Internal error with code 1001, please contact admin")
-                }
-                
-                body.append(value)
+            if let files = files {
+                try add(files: files, toBody: &body, encoding: encoding, withBoundary: boundary)
             }
-            
             body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
-            
             return body
             }()
+    }
+    
+    private func generateMultipartFormData(for body: inout Data,with parameters: [String:Any], encoding: String.Encoding, boundary: String) throws {
+        for (rawName, rawValue) in parameters {
+            if !body.isEmpty {
+                body.append("\r\n".data(using: .utf8)!)
+            }
+            
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            
+            guard
+                rawName.canBeConverted(to: encoding),
+                let disposition = "Content-Disposition: form-data; name=\"\(rawName)\"\r\n".data(using: .utf8) else {
+                    throw APIError.baseError("Internal error with code 1001, please contact admin")
+            }
+            body.append(disposition)
+            
+            body.append("\r\n".data(using: encoding)!)
+            
+            guard let value = "\(rawValue)".data(using: encoding) else {
+                throw APIError.baseError("Internal error with code 1001, please contact admin")
+            }
+            
+            body.append(value)
+        }
+    }
+    
+    private func add(files: [FileInfo], toBody body: inout Data, encoding: String.Encoding, withBoundary boundary: String) throws {
+        
+     
+        for file in files {
+            guard let filename = file.filename, let content = file.fileContents, let mimetype = file.mimetype, let name = file.name else { continue }
+            
+            if !body.isEmpty {
+                body.append("\r\n".data(using: .utf8)!)
+            }
+            
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            
+            guard
+                name.canBeConverted(to: encoding),
+                let disposition = "Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n".data(using: .utf8) else {
+                    throw APIError.baseError("Internal error with code 1001, please contact admin")
+            }
+            body.append(disposition)
+            
+            body.append("\r\n".data(using: encoding)!)
+            
+            guard let contentType = "Content-Type: \(mimetype)\r\n\r\n".data(using: encoding) else {
+                throw APIError.baseError("Internal error with code 1001, please contact admin")
+            }
+            
+            body.append(contentType)
+            body.append(content)
+        }
     }
 }
 
